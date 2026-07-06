@@ -151,7 +151,7 @@ pipeline {
 
         stage('Deploy to PROD') {
             when {
-                branch 'master'
+                expression { env.GIT_BRANCH == 'origin/master' || env.GIT_BRANCH == 'master' }
             }
             steps {
                 input message: "Valider le déploiement en PRODUCTION ?", ok: "Déployer"
