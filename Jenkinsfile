@@ -46,6 +46,7 @@ pipeline {
                         --set image.repository=${DOCKERHUB_USER}/cast-service \
                         --set image.tag=${IMAGE_TAG} \
                         --set service.nodePort=30001 \
+                        --set healthCheckPath=/api/v1/casts/docs \
                         --set env.DATABASE_URI=postgresql://cast_db_username:cast_db_password@cast-db/cast_db_dev
 
                     helm upgrade --install movie-service-dev ./charts \
@@ -53,10 +54,11 @@ pipeline {
                         --set image.repository=${DOCKERHUB_USER}/movie-service \
                         --set image.tag=${IMAGE_TAG} \
                         --set service.nodePort=30002 \
+                        --set healthCheckPath=/api/v1/movies/docs \
                         --set env.DATABASE_URI=postgresql://movie_db_username:movie_db_password@movie-db/movie_db_dev \
                         --set env.CAST_SERVICE_HOST_URL=http://cast-service-dev-fastapiapp/api/v1/casts/
 
-                    sleep 20
+                    sleep 30
                 """
             }
         }
@@ -82,6 +84,7 @@ pipeline {
                         --set image.repository=${DOCKERHUB_USER}/cast-service \
                         --set image.tag=${IMAGE_TAG} \
                         --set service.nodePort=30003 \
+                        --set healthCheckPath=/api/v1/casts/docs \
                         --set env.DATABASE_URI=postgresql://cast_db_username:cast_db_password@cast-db/cast_db_dev
 
                     helm upgrade --install movie-service-qa ./charts \
@@ -89,8 +92,21 @@ pipeline {
                         --set image.repository=${DOCKERHUB_USER}/movie-service \
                         --set image.tag=${IMAGE_TAG} \
                         --set service.nodePort=30004 \
+                        --set healthCheckPath=/api/v1/movies/docs \
                         --set env.DATABASE_URI=postgresql://movie_db_username:movie_db_password@movie-db/movie_db_dev \
                         --set env.CAST_SERVICE_HOST_URL=http://cast-service-qa-fastapiapp/api/v1/casts/
+
+                    sleep 30
+                """
+            }
+        }
+
+        stage('Test QA') {
+            steps {
+                sh """
+                    export KUBECONFIG=${KUBECONFIG_CRED}
+                    helm test cast-service-qa --namespace qa
+                    helm test movie-service-qa --namespace qa
                 """
             }
         }
@@ -106,6 +122,7 @@ pipeline {
                         --set image.repository=${DOCKERHUB_USER}/cast-service \
                         --set image.tag=${IMAGE_TAG} \
                         --set service.nodePort=30005 \
+                        --set healthCheckPath=/api/v1/casts/docs \
                         --set env.DATABASE_URI=postgresql://cast_db_username:cast_db_password@cast-db/cast_db_dev
 
                     helm upgrade --install movie-service-staging ./charts \
@@ -113,8 +130,21 @@ pipeline {
                         --set image.repository=${DOCKERHUB_USER}/movie-service \
                         --set image.tag=${IMAGE_TAG} \
                         --set service.nodePort=30006 \
+                        --set healthCheckPath=/api/v1/movies/docs \
                         --set env.DATABASE_URI=postgresql://movie_db_username:movie_db_password@movie-db/movie_db_dev \
                         --set env.CAST_SERVICE_HOST_URL=http://cast-service-staging-fastapiapp/api/v1/casts/
+
+                    sleep 30
+                """
+            }
+        }
+
+        stage('Test STAGING') {
+            steps {
+                sh """
+                    export KUBECONFIG=${KUBECONFIG_CRED}
+                    helm test cast-service-staging --namespace staging
+                    helm test movie-service-staging --namespace staging
                 """
             }
         }
@@ -134,6 +164,7 @@ pipeline {
                         --set image.repository=${DOCKERHUB_USER}/cast-service \
                         --set image.tag=${IMAGE_TAG} \
                         --set service.nodePort=30007 \
+                        --set healthCheckPath=/api/v1/casts/docs \
                         --set env.DATABASE_URI=postgresql://cast_db_username:cast_db_password@cast-db/cast_db_dev
 
                     helm upgrade --install movie-service-prod ./charts \
@@ -141,6 +172,7 @@ pipeline {
                         --set image.repository=${DOCKERHUB_USER}/movie-service \
                         --set image.tag=${IMAGE_TAG} \
                         --set service.nodePort=30008 \
+                        --set healthCheckPath=/api/v1/movies/docs \
                         --set env.DATABASE_URI=postgresql://movie_db_username:movie_db_password@movie-db/movie_db_dev \
                         --set env.CAST_SERVICE_HOST_URL=http://cast-service-prod-fastapiapp/api/v1/casts/
                 """
