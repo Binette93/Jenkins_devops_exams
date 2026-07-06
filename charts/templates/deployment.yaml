@@ -44,11 +44,11 @@ spec:
             {{- end }}
           livenessProbe:
             httpGet:
-              path: /api/v1/checkapi
+              path: {{ .Values.healthCheckPath | default "/api/v1/checkapi" }}
               port: http
           readinessProbe:
             httpGet:
-              path: /api/v1/checkapi
+              path: {{ .Values.healthCheckPath | default "/api/v1/checkapi" }}
               port: http
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
