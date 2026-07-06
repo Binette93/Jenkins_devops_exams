@@ -37,6 +37,11 @@ spec:
             - name: http
               containerPort: 8000
               protocol: TCP
+          env:
+            {{- range $key, $value := .Values.env }}
+            - name: {{ $key }}
+              value: {{ $value | quote }}
+            {{- end }}
           livenessProbe:
             httpGet:
               path: /api/v1/checkapi

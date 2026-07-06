@@ -39,16 +39,24 @@ pipeline {
             steps {
                 sh """
                     export KUBECONFIG=${KUBECONFIG_CRED}
+                    kubectl apply -f k8s-postgres.yaml -n dev
+
                     helm upgrade --install cast-service-dev ./charts \
                         --namespace dev \
                         --set image.repository=${DOCKERHUB_USER}/cast-service \
                         --set image.tag=${IMAGE_TAG} \
-                        --set service.nodePort=30001
+                        --set service.nodePort=30001 \
+                        --set env.DATABASE_URI=postgresql://cast_db_username:cast_db_password@cast-db/cast_db_dev
+
                     helm upgrade --install movie-service-dev ./charts \
                         --namespace dev \
                         --set image.repository=${DOCKERHUB_USER}/movie-service \
                         --set image.tag=${IMAGE_TAG} \
-                        --set service.nodePort=30002
+                        --set service.nodePort=30002 \
+                        --set env.DATABASE_URI=postgresql://movie_db_username:movie_db_password@movie-db/movie_db_dev \
+                        --set env.CAST_SERVICE_HOST_URL=http://cast-service-dev-fastapiapp/api/v1/casts/
+
+                    sleep 20
                 """
             }
         }
@@ -67,16 +75,22 @@ pipeline {
             steps {
                 sh """
                     export KUBECONFIG=${KUBECONFIG_CRED}
+                    kubectl apply -f k8s-postgres.yaml -n qa
+
                     helm upgrade --install cast-service-qa ./charts \
                         --namespace qa \
                         --set image.repository=${DOCKERHUB_USER}/cast-service \
                         --set image.tag=${IMAGE_TAG} \
-                        --set service.nodePort=30003
+                        --set service.nodePort=30003 \
+                        --set env.DATABASE_URI=postgresql://cast_db_username:cast_db_password@cast-db/cast_db_dev
+
                     helm upgrade --install movie-service-qa ./charts \
                         --namespace qa \
                         --set image.repository=${DOCKERHUB_USER}/movie-service \
                         --set image.tag=${IMAGE_TAG} \
-                        --set service.nodePort=30004
+                        --set service.nodePort=30004 \
+                        --set env.DATABASE_URI=postgresql://movie_db_username:movie_db_password@movie-db/movie_db_dev \
+                        --set env.CAST_SERVICE_HOST_URL=http://cast-service-qa-fastapiapp/api/v1/casts/
                 """
             }
         }
@@ -85,16 +99,22 @@ pipeline {
             steps {
                 sh """
                     export KUBECONFIG=${KUBECONFIG_CRED}
+                    kubectl apply -f k8s-postgres.yaml -n staging
+
                     helm upgrade --install cast-service-staging ./charts \
                         --namespace staging \
                         --set image.repository=${DOCKERHUB_USER}/cast-service \
                         --set image.tag=${IMAGE_TAG} \
-                        --set service.nodePort=30005
+                        --set service.nodePort=30005 \
+                        --set env.DATABASE_URI=postgresql://cast_db_username:cast_db_password@cast-db/cast_db_dev
+
                     helm upgrade --install movie-service-staging ./charts \
                         --namespace staging \
                         --set image.repository=${DOCKERHUB_USER}/movie-service \
                         --set image.tag=${IMAGE_TAG} \
-                        --set service.nodePort=30006
+                        --set service.nodePort=30006 \
+                        --set env.DATABASE_URI=postgresql://movie_db_username:movie_db_password@movie-db/movie_db_dev \
+                        --set env.CAST_SERVICE_HOST_URL=http://cast-service-staging-fastapiapp/api/v1/casts/
                 """
             }
         }
@@ -107,16 +127,22 @@ pipeline {
                 input message: "Valider le déploiement en PRODUCTION ?", ok: "Déployer"
                 sh """
                     export KUBECONFIG=${KUBECONFIG_CRED}
+                    kubectl apply -f k8s-postgres.yaml -n prod
+
                     helm upgrade --install cast-service-prod ./charts \
                         --namespace prod \
                         --set image.repository=${DOCKERHUB_USER}/cast-service \
                         --set image.tag=${IMAGE_TAG} \
-                        --set service.nodePort=30007
+                        --set service.nodePort=30007 \
+                        --set env.DATABASE_URI=postgresql://cast_db_username:cast_db_password@cast-db/cast_db_dev
+
                     helm upgrade --install movie-service-prod ./charts \
                         --namespace prod \
                         --set image.repository=${DOCKERHUB_USER}/movie-service \
                         --set image.tag=${IMAGE_TAG} \
-                        --set service.nodePort=30008
+                        --set service.nodePort=30008 \
+                        --set env.DATABASE_URI=postgresql://movie_db_username:movie_db_password@movie-db/movie_db_dev \
+                        --set env.CAST_SERVICE_HOST_URL=http://cast-service-prod-fastapiapp/api/v1/casts/
                 """
             }
         }
